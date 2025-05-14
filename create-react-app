@@ -1,0 +1,95 @@
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
+export default function EstimasiKorupsiApp() {
+  const [formData, setFormData] = useState({
+    PAD: "",
+    DAU: "",
+    DAK: "",
+    DBH: "",
+    belanjaModal: "",
+    belanjaPegawai: "",
+    PDB: "",
+    jumlahPenduduk: "",
+    ASN: "",
+    diJawa: false,
+    kabupaten: false,
+    kota: false,
+  });
+
+  const [hasil, setHasil] = useState(null);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+
+  const hitungEstimasi = () => {
+    const log = (val) => Math.log(parseFloat(val));
+
+    try {
+      const estimasi =
+        24.42374 +
+        0.0355958 * log(formData.PAD) +
+        -0.0020861 * log(formData.DAU) +
+        -0.1876274 * log(formData.DAK) +
+        0.1950145 * log(formData.DBH) +
+        -0.0758774 * log(formData.belanjaModal) +
+        -0.0552821 * log(formData.belanjaPegawai) +
+        -0.011822 * log(formData.PDB) +
+        0.0291157 * log(formData.jumlahPenduduk) +
+        0.0759321 * log(formData.ASN) +
+        -0.4262658 * (formData.diJawa ? 1 : 0) +
+        -1.283362 * (formData.kabupaten ? 1 : 0) +
+        -1.359692 * (formData.kota ? 1 : 0);
+
+      setHasil(estimasi.toFixed(4));
+    } catch (error) {
+      alert("Pastikan semua nilai numerik telah diisi dengan benar.");
+    }
+  };
+
+  return (
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-md space-y-4">
+      <h1 className="text-2xl font-bold text-center">Estimasi Kerugian Negara dari Korupsi</h1>
+      <p className="text-sm text-gray-500 text-center">Masukkan semua nilai dalam satuan rupiah atau jumlah orang sesuai konteks.</p>
+      <Input name="PAD" placeholder="Pendapatan Asli Daerah (PAD)" onChange={handleChange} />
+      <Input name="DAU" placeholder="Dana Alokasi Umum (DAU)" onChange={handleChange} />
+      <Input name="DAK" placeholder="Dana Alokasi Khusus (DAK)" onChange={handleChange} />
+      <Input name="DBH" placeholder="Dana Bagi Hasil (DBH)" onChange={handleChange} />
+      <Input name="belanjaModal" placeholder="Belanja Modal" onChange={handleChange} />
+      <Input name="belanjaPegawai" placeholder="Belanja Pegawai" onChange={handleChange} />
+      <Input name="PDB" placeholder="Produk Domestik Bruto (PDB)" onChange={handleChange} />
+      <Input name="jumlahPenduduk" placeholder="Jumlah Penduduk" onChange={handleChange} />
+      <Input name="ASN" placeholder="Jumlah ASN" onChange={handleChange} />
+
+      <div className="flex items-center space-x-2">
+        <input type="checkbox" name="diJawa" onChange={handleChange} />
+        <label>Apakah di Pulau Jawa?</label>
+      </div>
+      <div className="flex items-center space-x-2">
+        <input type="checkbox" name="kabupaten" onChange={handleChange} />
+        <label>Apakah Kabupaten?</label>
+      </div>
+      <div className="flex items-center space-x-2">
+        <input type="checkbox" name="kota" onChange={handleChange} />
+        <label>Apakah Kota?</label>
+      </div>
+
+      <Button onClick={hitungEstimasi}>Hitung Estimasi</Button>
+
+      {hasil && (
+        <Card>
+          <CardContent className="text-center p-4">
+            <p className="text-lg">Estimasi Kerugian Negara: <strong>{hasil}</strong></p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
