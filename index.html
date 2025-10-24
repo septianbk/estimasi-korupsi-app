@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kalkulator Evaluasi PEMDA (Prototype)</title>
+  <style>
+    body{font-family: Inter, system-ui, -apple-system, Arial; max-width:980px;margin:24px auto;padding:18px;color:#0b1220}
+    h1{font-size:20px;margin-bottom:6px}
+    .card{border-radius:12px;padding:16px;background:#fcfcfd;box-shadow:0 6px 18px rgba(15,23,42,0.06);margin-bottom:14px}
+    label{display:block;font-size:13px;margin-bottom:6px}
+    input[type="number"], input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .row{margin-bottom:10px}
+    .muted{color:#52606d;font-size:13px}
+    button{background:#0f1724;color:#fff;border:none;padding:10px 14px;border-radius:9px;cursor:pointer}
+    .secondary{background:#eef2ff;color:#0b1220}
+    .outputs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .out{padding:12px;border-radius:10px;background:#fff; text-align:center}
+    pre{background:#0b1224;color:#fff;padding:10px;border-radius:8px;overflow:auto}
+    .small{font-size:12px;color:#334155}
+    .note{font-size:13px;background:#fff4e6;padding:10px;border-radius:8px}
+  </style>
+</head>
+<body>
+  <h1>Kalkulator Evaluasi PEMDA — Prototype</h1>
+  <div class="card">
+    <div class="muted">Cara pakai: isi nilai input (Rupiah) pada bidang di bawah. Koefisien model dan parameter dapat disesuaikan jika Anda punya nilai persis dari file Excel.</div>
+  </div>
+
+  <div class="card">
+    <h2>Input Angka (Rupiah)</h2>
+    <div class="grid">
+      <div>
+        <label>Pendapatan Asli Daerah (PAD)</label>
+        <input id="pad" type="number" step="any" placeholder="e.g. 2698912471144" value="2698912471144">
+      </div>
+      <div>
+        <label>Dana Alokasi Umum (DAU)</label>
+        <input id="dau" type="number" step="any" placeholder="e.g. 2010367360000" value="2010367360000">
+      </div>
+      <div>
+        <label>Dana Alokasi Khusus (DAK)</label>
+        <input id="dak" type="number" step="any" placeholder="e.g. 53822460000" value="53822460000">
+      </div>
+      <div>
+        <label>Dana Bagi Hasil (DBH)</label>
+        <input id="dbh" type="number" step="any" placeholder="e.g. 158603592874" value="158603592874">
+      </div>
+      <div>
+        <label>Belanja Modal</label>
+        <input id="belanja_modal" type="number" step="any" placeholder="e.g. 218345950000" value="218345950000">
+      </div>
+      <div>
+        <label>Belanja Pegawai</label>
+        <input id="belanja_pegawai" type="number" step="any" placeholder="e.g. 1391678744400" value="1391678744400">
+      </div>
+      <div style="grid-column:1/3">
+        <label>Produk Domestik Regional Bruto (PDRB) per kapita</label>
+        <input id="pdrb" type="number" step="any" placeholder="e.g. 28282426" value="28282426">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Koefisien & Parameter Model (editable)</h2>
+    <div class="grid">
+      <div>
+        <label>Coef PAD (log10)</label>
+        <input id="c_pad" type="number" step="any" value="-0.0278">
+      </div>
+      <div>
+        <label>Coef DAU (log10)</label>
+        <input id="c_dau" type="number" step="any" value="-0.0043">
+      </div>
+      <div>
+        <label>Coef DAK (log10)</label>
+        <input id="c_dak" type="number" step="any" value="-0.0027">
+      </div>
+      <div>
+        <label>Coef DBH (log10)</label>
+        <input id="c_dbh" type="number" step="any" value="-0.0016">
+      </div>
+      <div>
+        <label>Coef Belanja Modal (log10)</label>
+        <input id="c_belanja_modal" type="number" step="any" value="-0.0278">
+      </div>
+      <div>
+        <label>Coef Belanja Pegawai (log10)</label>
+        <input id="c_belanja_pegawai" type="number" step="any" value="-0.0553">
+      </div>
+      <div>
+        <label>Coef PDRB per kapita (log10)</label>
+        <input id="c_pdrb" type="number" step="any" value="-0.0118">
+      </div>
+      <div>
+        <label>Transformasi output</label>
+        <input id="transform" type="text" value="10^sum"> <div class="small muted">Pilihan: raw | 10^sum | exp(sum). Default 10^sum (menganggap sum adalah log10)</div>
+      </div>
+      <div>
+        <label>Persentase estimasi temuan BPK</label>
+        <input id="bpk_rate" type="number" step="any" value="0.05"> <div class="small muted">Masukkan desimal (0.05 = 5%)</div>
+      </div>
+      <div>
+        <label>PDRB min (untuk normalisasi HDI proxy)</label>
+        <input id="pdrb_min" type="number" step="any" value="1000000">
+      </div>
+      <div>
+        <label>PDRB max (untuk normalisasi HDI proxy)</label>
+        <input id="pdrb_max" type="number" step="any" value="100000000">
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <button id="load_defaults" class="secondary">Load contoh default dari Excel</button>
+      <button id="calc">Hitung</button>
+      <button id="copy" style="margin-left:8px">Salin hasil ke clipboard</button>
+      <button id="export" style="margin-left:8px">Export hasil (CSV)</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Hasil</h2>
+    <div class="outputs" id="outputs">
+      <div class="out">
+        <div class="small">Estimasi Kerugian Negara (perkiraan)</div>
+        <div id="loss" style="font-size:18px;font-weight:600;margin-top:6px">-</div>
+        <div class="muted small">(Rupiah)</div>
+      </div>
+      <div class="out">
+        <div class="small">Estimasi Temuan BPK</div>
+        <div id="bpk" style="font-size:18px;font-weight:600;margin-top:6px">-</div>
+        <div class="muted small">(Rupiah)</div>
+      </div>
+      <div class="out">
+        <div class="small">Indeks Pembangunan Manusia (proxy)</div>
+        <div id="hdi" style="font-size:18px;font-weight:600;margin-top:6px">-</div>
+        <div class="muted small">Skala 0 - 1</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="note">Catatan: Ini adalah prototype. Model default mengasumsikan transformasi log10 pada setiap input lalu dijumlahkan dengan koefisien. Jika Anda memiliki rumus persis dari file Excel (misal perkalian langsung atau transformasi lain), ganti koefisien atau pilihan transform di panel di atas.</div>
+    </div>
+  </div>
+
+  <script>
+    function getNumber(id){const v=document.getElementById(id).value;const n=parseFloat(v);return isFinite(n)?n:0}
+    function fmt(x){if(!isFinite(x)) return '-'; if(Math.abs(x)>=1e12) return (x/1e12).toFixed(3)+' T'; if(Math.abs(x)>=1e9) return (x/1e9).toFixed(3)+' Mrd'; if(Math.abs(x)>=1e6) return (x/1e6).toFixed(3)+' Jt'; return x.toLocaleString('id-ID')}
+
+    document.getElementById('calc').addEventListener('click', ()=>{
+      // inputs
+      const pad=getNumber('pad');
+      const dau=getNumber('dau');
+      const dak=getNumber('dak');
+      const dbh=getNumber('dbh');
+      const belanja_modal=getNumber('belanja_modal');
+      const belanja_pegawai=getNumber('belanja_pegawai');
+      const pdrb=getNumber('pdrb');
+
+      // coefs
+      const c_pad=getNumber('c_pad');
+      const c_dau=getNumber('c_dau');
+      const c_dak=getNumber('c_dak');
+      const c_dbh=getNumber('c_dbh');
+      const c_belanja_modal=getNumber('c_belanja_modal');
+      const c_belanja_pegawai=getNumber('c_belanja_pegawai');
+      const c_pdrb=getNumber('c_pdrb');
+
+      // compute sum using log10 where possible (avoid log of zero)
+      function slog(x){return x>0?Math.log10(x):0}
+      const s = c_pad*slog(pad) + c_dau*slog(dau) + c_dak*slog(dak) + c_dbh*slog(dbh) + c_belanja_modal*slog(belanja_modal) + c_belanja_pegawai*slog(belanja_pegawai) + c_pdrb*slog(pdrb);
+
+      const transform=document.getElementById('transform').value || '10^sum';
+      let estimate_loss;
+      if(transform==='raw') estimate_loss = s;
+      else if(transform==='exp(sum)') estimate_loss = Math.exp(s);
+      else estimate_loss = Math.pow(10, s); // default
+
+      const bpk_rate = getNumber('bpk_rate');
+      const estimate_bpk = estimate_loss * bpk_rate;
+
+      // HDI proxy: normalize pdrb between pdrb_min/pdrb_max, scale 0.3..0.95
+      const pdrb_min=getNumber('pdrb_min');
+      const pdrb_max=getNumber('pdrb_max');
+      let norm = (pdrb - pdrb_min) / Math.max(1, (pdrb_max - pdrb_min));
+      if(norm<0) norm=0; if(norm>1) norm=1;
+      const hdi = (0.3 + norm * 0.65); // 0.3..0.95
+
+      document.getElementById('loss').innerText = fmt(estimate_loss);
+      document.getElementById('bpk').innerText = fmt(estimate_bpk);
+      document.getElementById('hdi').innerText = hdi.toFixed(3);
+
+      // store last results for export
+      window._lastResult = {
+        pad, dau, dak, dbh, belanja_modal, belanja_pegawai, pdrb,
+        c_pad, c_dau, c_dak, c_dbh, c_belanja_modal, c_belanja_pegawai, c_pdrb,
+        transform, estimate_loss, estimate_bpk, hdi
+      };
+    });
+
+    document.getElementById('copy').addEventListener('click', async ()=>{
+      if(!window._lastResult){alert('Silakan tekan Hitung terlebih dahulu');return}
+      const txt = JSON.stringify(window._lastResult, null, 2);
+      await navigator.clipboard.writeText(txt);
+      alert('Hasil disalin ke clipboard');
+    });
+
+    document.getElementById('export').addEventListener('click', ()=>{
+      if(!window._lastResult){alert('Silakan tekan Hitung terlebih dahulu');return}
+      const r = window._lastResult;
+      const rows = [Object.keys(r).join(','), Object.values(r).join(',')].join('\n');
+      const blob = new Blob([rows], {type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'hasil_kalkulator.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('load_defaults').addEventListener('click', ()=>{
+      // These defaults come from the example values found in the Excel prototype sheet
+      document.getElementById('pad').value='2698912471144';
+      document.getElementById('dau').value='2010367360000';
+      document.getElementById('dak').value='53822460000';
+      document.getElementById('dbh').value='158603592874';
+      document.getElementById('belanja_modal').value='218345950000';
+      document.getElementById('belanja_pegawai').value='1391678744400';
+      document.getElementById('pdrb').value='28282426';
+      alert('Default contoh dimuat. Tekan Hitung untuk menghitung hasil. Ubah koefisien jika Anda punya nilai pasti.');
+    });
+
+    // auto-calc first time
+    document.getElementById('calc').click();
+  </script>
+</body>
+</html>
